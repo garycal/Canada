@@ -12,3 +12,9 @@ Some products, like Kirkland brand or Kraft, are US companies but do a lot of th
 they may actually be made in Canada and ok to buy. If somebody is able to integrate this with a database of some kind, please do it.
 I would love for this to be more accurate.
 
+This plug-in only works for Instacart -- for now. Feel free to modify it to work on other sites. The whole idea is to
+make it easier for people shopping online to quickly identify and select the Canadian product.
+
+Canada needs to diversity its trading partners. It can never again let itself be vulnerable to a devestating economic attack by any single country -- 
+no matter how longstanding the alliance with that country has been. Once your neighbor has set fire to your house once,
+you need to take steps to prevent it from happening again.
