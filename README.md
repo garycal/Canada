@@ -1,6 +1,11 @@
 # Canada
 This is a Chrome plug-in that modifies Instacart to show Canadian products with a 🍁 and US products with a ❌
 
+Steps for installation:
+(1) Download the files as a zip file.
+(2) [optional] modify the background.js file to add or remove products from the US or Canadian lists
+(3) 
+
 This is licensed under the CC BY-NC-SA 4.0 Attribution-Noncommercial-Sharealike 4.0 International license. See license.txt for details.
 
 Please feel free to fork this code, improve it, etc.
@@ -12,8 +17,15 @@ Some products, like Kirkland brand or Kraft, are US companies but do a lot of th
 they may actually be made in Canada and ok to buy. If somebody is able to integrate this with a database of some kind, please do it.
 I would love for this to be more accurate.
 
+I'm well aware that many people, me included, think KD should be listed as Canadian, but most Kraft products are not -- 
+so if it is listed as "Kraft KD", the Kraft will be picked up first. Technically it is correct, it is a US company and it will be listed as US. 
+I'd love somebody with more free time than I have to improve the accuracy.
+
 This plug-in only works for Instacart -- for now. Feel free to modify it to work on other sites. The whole idea is to
 make it easier for people shopping online to quickly identify and select the Canadian product.
+
+I'm also aware of the irony of using a US company, Instacart, to buy products while trying to buy Canadian.
+There is a large demand for a Canadian Instacart competitor -- please somebody, do it.
 
 Canada needs to diversity its trading partners. It can never again let itself be vulnerable to a devestating economic attack by any single country -- 
 no matter how longstanding the alliance with that country has been. Once your neighbor has set fire to your house once,
