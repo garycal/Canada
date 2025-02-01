@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Instacart Origin Extension Options</title>
+    <style>
+      body { font-family: sans-serif; margin: 20px; }
+      textarea { width: 100%; height: 100px; }
+      button { margin-top: 10px; }
+      #status { margin-top: 5px; color: green; }
+    </style>
+  </head>
+  <body>
+    <h1>Instacart Origin Extension Options</h1>
+    <p>Edit your US and Canadian brand lists below. (One brand per line.)</p>
+
+    <h2>US Brands</h2>
+    <textarea id="usBrands"></textarea>
+
+    <h2>Canadian Brands</h2>
+    <textarea id="caBrands"></textarea>
+
+    <button id="saveBtn">Save</button>
+    <div id="status"></div>
+
+    <script src="options.js"></script>
+  </body>
+</html>
