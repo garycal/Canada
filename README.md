@@ -2,9 +2,13 @@
 This is a Chrome plug-in that modifies Instacart to show Canadian products with a 🍁 and US products with a ❌
 
 Steps for installation:
-(1) Download the files as a zip file.
+(1) Download the files to a folder, or download them as a zip file and decompress them into a folder.
 (2) [optional] modify the background.js file to add or remove products from the US or Canadian lists
-(3) 
+(3) Go to chrome://extensions/ in the address bar
+(4) Click "load unpacked" in the upper left.
+(5) Navigate to the folder and select the folder.
+(6) Go to instacart and look for the 🍁 (and optionally avoid the ❌) to buy Canadian.
+(7) Please check for yourself. I needed to rush to get this done quickly, so fork the project if you wish and change the list, etc.
 
 This is licensed under the CC BY-NC-SA 4.0 Attribution-Noncommercial-Sharealike 4.0 International license. See license.txt for details.
 
