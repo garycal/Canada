@@ -34,6 +34,6 @@ I would love for this to be more accurate.
 Should work on any site (should, not will for sure). Feel free to modify it to work on other sites. The whole idea is to
 make it easier for people shopping online to quickly identify and select the Canadian product.
 
-Canada needs to diversity its trading partners. It can never again let itself be vulnerable to a devestating economic attack by any single country -- 
+Canada needs to diversity its trading partners. It can never again let itself be vulnerable to a devastating economic attack by any single country -- 
 no matter how longstanding the alliance with that country has been. Once your neighbor has set fire to your house once,
 you need to take steps to prevent it from happening again.
