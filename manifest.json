@@ -1,6 +1,6 @@
 {
   "name": "Canada-Mexico-US origin indicator",
-  "version": "1.33",
+  "version": "1.40",
   "manifest_version": 3,
   "description": "Tags items with 🍁, 🇲🇽, ❌, etc. across many e-commerce sites. Handles accent normalization & short brand skipping.",
   "permissions": [
@@ -27,6 +27,9 @@
     "https://*.aliexpress.com/*",
     "https://*.costco.com/*",
     "https://*.costco.ca/*",
+    "https://*.doordash.com/*",
+    "https://*.ubereats.com/*",
+    "https://*.skipthedishes.com/*",
     "https://*.homedepot.com/*",
     "https://*.homedepot.ca/*",
     "https://*.lowes.com/*",
@@ -90,6 +93,9 @@
         "https://*.aliexpress.com/*",
         "https://*.costco.com/*",
         "https://*.costco.ca/*",
+        "https://*.doordash.com/*",
+        "https://*.ubereats.com/*",
+        "https://*.skipthedishes.com/*",
         "https://*.homedepot.com/*",
         "https://*.homedepot.ca/*",
         "https://*.lowes.com/*",
