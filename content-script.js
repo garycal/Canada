@@ -1,15 +1,12 @@
 // content-script.js
 
-let US_BRANDS = [];
-let CA_BRANDS = [];
+let CAT1 = []; // 🍁
+let CAT2 = []; // 🇲🇽
+let CAT3 = []; // ❌
+let CAT4 = []; // ❓
+let CAT5 = []; // ❔
+let CAT6 = []; // 🌐
 
-/**
- * superNormalize
- * - uppercase
- * - remove (r), (tm), (c)
- * - replace curly quotes
- * - remove punctuation
- */
 function superNormalize(str) {
   let out = str.toUpperCase();
   out = out.replace(/[®™©]/g, "");
@@ -18,26 +15,21 @@ function superNormalize(str) {
   return out;
 }
 
-function matchesBrand(productText, brandArray) {
-  const normText = superNormalize(productText);
-  // debug: console.log("Checking text:", normText, "vs brandArray size:", brandArray.length);
-  for (const brand of brandArray) {
-    const normBrand = superNormalize(brand);
-    if (normBrand && normText.includes(normBrand)) {
-      console.log("MATCH FOUND brand:", brand, "in text:", productText);
+function matchBrand(text, brandArr) {
+  const norm = superNormalize(text);
+  for (const brand of brandArr) {
+    const nb = superNormalize(brand);
+    if (nb && norm.includes(nb)) {
       return true;
     }
   }
   return false;
 }
 
-/**
- * gatherAllText: recursively merges child text nodes
- */
-function gatherAllText(el) {
-  if (!el) return "";
+function gatherAllText(elem) {
+  if (!elem) return "";
   let txt = "";
-  el.childNodes.forEach((child) => {
+  elem.childNodes.forEach((child) => {
     if (child.nodeType === Node.TEXT_NODE) {
       txt += child.nodeValue;
     } else if (child.nodeType === Node.ELEMENT_NODE) {
@@ -47,110 +39,99 @@ function gatherAllText(el) {
   return txt;
 }
 
-/**
- * tagElement
- */
 function tagElement(el) {
-  const entireText = gatherAllText(el);
-  if (!entireText) return;
-  if (entireText.includes("❌") || entireText.includes("🍁")) return;
+  const text = gatherAllText(el);
+  if (!text) return;
+  if (/[❌🍁🇲🇽❓❔🌐]/.test(text)) return; // skip if we already appended
 
-  if (matchesBrand(entireText, US_BRANDS)) {
-    el.innerText = el.innerText + " ❌";
-  } else if (matchesBrand(entireText, CA_BRANDS)) {
-    el.innerText = el.innerText + " 🍁";
+  // in priority order
+  if (matchBrand(text, CAT1)) {
+    el.innerText += " 🍁";
+  } else if (matchBrand(text, CAT2)) {
+    el.innerText += " 🇲🇽";
+  } else if (matchBrand(text, CAT3)) {
+    el.innerText += " ❌";
+  } else if (matchBrand(text, CAT4)) {
+    el.innerText += " ❓";
+  } else if (matchBrand(text, CAT5)) {
+    el.innerText += " ❔";
+  } else if (matchBrand(text, CAT6)) {
+    el.innerText += " 🌐";
   }
 }
 
-/**
- * scanBySelectors
- */
 function scanBySelectors() {
   const selectors = [
     '[data-test="item-name"]',
     '[data-testid="item-detail-name"]',
     '[data-testid="item-name"]',
     '.item-title',
+    '.product-title',
+    '.product-name',
     '.item-name',
+    '.sku-title',
+    '.css-1nhiovu',
     '.css-1kiw93k',
-    '.css-1nhiovu'
+    '.product-header',
+    '.s-title'
   ];
   const combined = selectors.join(",");
   const elems = document.querySelectorAll(combined);
-  console.log("scanBySelectors found:", elems.length);
   elems.forEach(tagElement);
 }
 
-/**
- * walkAndReplaceTextNodes
- */
-function walkAndReplaceTextNodes() {
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
-  let replaced = 0;
+function walkTextNodes() {
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   while (true) {
     const node = walker.nextNode();
     if (!node) break;
     const txt = node.nodeValue;
     if (!txt || !txt.trim()) continue;
 
-    if (!txt.includes("❌") && !txt.includes("🍁")) {
-      if (matchesBrand(txt, US_BRANDS)) {
-        node.nodeValue = txt + " ❌";
-        replaced++;
-      } else if (matchesBrand(txt, CA_BRANDS)) {
+    if (!/[❌🍁🇲🇽❓❔🌐]/.test(txt)) {
+      if (matchBrand(txt, CAT1)) {
         node.nodeValue = txt + " 🍁";
-        replaced++;
+      } else if (matchBrand(txt, CAT2)) {
+        node.nodeValue = txt + " 🇲🇽";
+      } else if (matchBrand(txt, CAT3)) {
+        node.nodeValue = txt + " ❌";
+      } else if (matchBrand(txt, CAT4)) {
+        node.nodeValue = txt + " ❓";
+      } else if (matchBrand(txt, CAT5)) {
+        node.nodeValue = txt + " ❔";
+      } else if (matchBrand(txt, CAT6)) {
+        node.nodeValue = txt + " 🌐";
       }
     }
   }
-  console.log("TreeWalker replaced:", replaced);
 }
 
-/**
- * Insert a debug indicator
- */
-function insertLoadedIndicator() {
-  const div = document.createElement("div");
-  div.textContent = "Instacart Extension LOADED (debug) ✅";
-  div.style.cssText = `
-    position: fixed;
-    bottom: 10px; right: 10px;
-    background: #cfc;
-    border: 2px solid green;
-    padding: 6px;
-    z-index: 999999;
-  `;
-  document.body.appendChild(div);
-}
-
-/**
- * observeMutations
- */
 function observeMutations() {
   const obs = new MutationObserver(() => {
     scanBySelectors();
-    walkAndReplaceTextNodes();
+    walkTextNodes();
   });
   obs.observe(document.body, { childList: true, subtree: true });
-  console.log("MutationObserver active");
 }
 
-/**
- * main
- */
 function main() {
-  console.log("content-script.js starting up");
- // insertLoadedIndicator();
-
-  chrome.storage.sync.get(["usBrands", "caBrands"], (data) => {
-    US_BRANDS = data.usBrands || [];
-    CA_BRANDS = data.caBrands || [];
-    console.log("Loaded brand arrays. US:", US_BRANDS.length, "CA:", CA_BRANDS.length);
-    console.log("US_BRANDS:", JSON.stringify(US_BRANDS, null, 2));
-    console.log("CA_BRANDS:", JSON.stringify(CA_BRANDS, null, 2));
+  chrome.storage.sync.get([
+    "cat1Canadian",
+    "cat2Mexican",
+    "cat3US",
+    "cat4PartialUSCA",
+    "cat5PartialUSMX",
+    "cat6Outside"
+  ], (data) => {
+    CAT1 = data.cat1Canadian || [];
+    CAT2 = data.cat2Mexican || [];
+    CAT3 = data.cat3US || [];
+    CAT4 = data.cat4PartialUSCA || [];
+    CAT5 = data.cat5PartialUSMX || [];
+    CAT6 = data.cat6Outside || [];
 
     scanBySelectors();
-    walkAndReplaceTextNodes();
+    walkTextNodes();
     observeMutations();
   });
 }
