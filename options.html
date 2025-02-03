@@ -1,28 +1,53 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Instacart Origin Extension Options</title>
-    <style>
-      body { font-family: sans-serif; margin: 20px; }
-      textarea { width: 100%; height: 100px; }
-      button { margin-top: 10px; }
-      #status { margin-top: 5px; color: green; }
-    </style>
-  </head>
-  <body>
-    <h1>Instacart Origin Extension Options</h1>
-    <p>Edit your US and Canadian brand lists below. (One brand per line.)</p>
+<head>
+  <meta charset="UTF-8">
+  <title>6-Category Brand Options</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 160px; /* large boxes */
+    }
+    button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    #status {
+      margin-top: 5px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h1>6-Category Brand Options</h1>
+  <p>Edit each category's brand list (one brand per line). Large text boxes to help you see more entries!</p>
 
-    <h2>US Brands</h2>
-    <textarea id="usBrands"></textarea>
+  <h3>1) Canadian (🍁)</h3>
+  <textarea id="cat1"></textarea>
 
-    <h2>Canadian Brands</h2>
-    <textarea id="caBrands"></textarea>
+  <h3>2) Mexican (🇲🇽)</h3>
+  <textarea id="cat2"></textarea>
 
-    <button id="saveBtn">Save</button>
-    <div id="status"></div>
+  <h3>3) US (❌)</h3>
+  <textarea id="cat3"></textarea>
 
-    <script src="options.js"></script>
-  </body>
+  <h3>4) Partially US, Partially Canadian (❓)</h3>
+  <textarea id="cat4"></textarea>
+
+  <h3>5) Partially US, Partially Mexican (❔)</h3>
+  <textarea id="cat5"></textarea>
+
+  <h3>6) Outside (🌐)</h3>
+  <textarea id="cat6"></textarea>
+
+  <button id="saveBtn">Save</button>
+  <div id="status"></div>
+
+  <script src="options.js"></script>
+</body>
 </html>
