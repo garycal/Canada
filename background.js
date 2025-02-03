@@ -14,6 +14,9 @@ function normalizeForCheck(str) {
   return s;
 }
 
+/**
+ * We only keep brand names whose normalized form is >=3 chars
+ */
 function cleanBrandList(arr) {
   const cleaned = [];
   for (const item of arr) {
@@ -26,26 +29,23 @@ function cleanBrandList(arr) {
 }
 
 chrome.runtime.onInstalled.addListener(() => {
-  // If the environment doesn't support chrome.storage.sync, bail gracefully
   if (!chrome?.storage?.sync) {
     console.warn("chrome.storage.sync not available?");
     return;
   }
 
   chrome.storage.sync.get(
-    [
-      "cat1Canadian",
-      "cat2Mexican",
-      "cat3US",
-      "cat4PartialUSCA",
-      "cat5PartialUSMX",
-      "cat6Outside"
-    ],
+    ["cat1Canadian", "cat2Mexican", "cat3US", "cat4PartialUSCA", "cat5PartialUSMX", "cat6Outside"],
     (data) => {
 
+      // =========================================================
       // 1) Canadian (🍁)
+      // Remove “Old Dutch,” “Kraft Canada,” “Nestlé (CAN),” “Guerrero (CA),” and “Western Family” since they appear partial or are global.
+      // =========================================================
+
       if (!data.cat1Canadian) {
         let cat1 = [
+          // Purged duplicates or partial items from the old cat1
           "TIM HORTONS",
           "MAPLE LEAF",
           "PRESIDENT'S CHOICE",
@@ -70,24 +70,23 @@ chrome.runtime.onInstalled.addListener(() => {
           "MONTANA'S",
           "MR. SUB",
           "MARY BROWN'S",
-          "DARE FOODS",
+          "DARE FOODS", // note: partial with US factories, but let's keep the primary brand here if you prefer
           "DAVIDSTEA",
           "FARM BOY",
           "FORTINOS",
           "GASPEREAU VINEYARDS",
           "GRANVILLE ISLAND BREWING",
-          "GUERRERO (CA)",
           "HABITANT",
           "HARVEY & VERN'S",
           "JONES SODA (CAN)",
           "KERNALS POPCORN",
-          "KRAFT CANADA",
+          // "KRAFT CANADA" => removed, partial
           "LITTLE NORTHERN BAKEHOUSE",
           "MCCORMICK CANADA",
           "METRO",
           "MORTIMER'S",
           "MOTHER PARKERS",
-          "NESTLÉ (CAN)",
+          // "NESTLÉ (CAN)" => removed, partial
           "OLYMEL",
           "OLIVIERI",
           "PACIFIC WESTERN BREWING",
@@ -124,7 +123,7 @@ chrome.runtime.onInstalled.addListener(() => {
           "FORT GARRY BREWING",
           "FRESHCO",
           "GOLD SEAL (SEAFOOD)",
-          "GREEN & BLACK'S (CA DIV)",
+          "GREEN & BLACK'S (CA DIV)", // Some confusion, but leaving as user had it
           "HOP CITY BREWING",
           "IRRESISTIBLES",
           "JON MONTREAL BAGELS",
@@ -140,7 +139,7 @@ chrome.runtime.onInstalled.addListener(() => {
           "ST. HUBERT",
           "VILLAGGIO",
           "VOORTMAN",
-          "WESTERN FAMILY",
+          // "WESTERN FAMILY" => moved to partial
           "ZARKY'S",
           "ZIGGY'S",
           "WEBBER NATURALS",
@@ -149,9 +148,8 @@ chrome.runtime.onInstalled.addListener(() => {
           "BURNBRAE FARMS",
           "MISS VICKIE'S",
           "QUE PASA",
-          "OLD DUTCH",
+          // "OLD DUTCH" => partial
           "NEAL BROTHERS",
-          "KETTLE BRAND",
           "UNICO",
           "FOREMOST DAIRIES",
           "GREAT GENTLEMAN",
@@ -246,6 +244,7 @@ chrome.runtime.onInstalled.addListener(() => {
       }
 
       // 3) US (❌)
+      // Move "GREAT VALUE" to partial
       if (!data.cat3US) {
         let cat3 = [
           "HOSTESS",
@@ -256,6 +255,7 @@ chrome.runtime.onInstalled.addListener(() => {
           "HERSHEY'S",
           "CAMPBELL'S",
           "HEINZ",
+          "KETTLE BRAND",
           "KRAFT",
           "GENERAL MILLS",
           "KELLOGG'S",
@@ -267,6 +267,7 @@ chrome.runtime.onInstalled.addListener(() => {
           "CHEEZ-IT",
           "CHEETOS",
           "OSCAR MAYER",
+          "JOHNNIE WALKER",
           "REESE'S",
           "HORMEL",
           "NABISCO",
@@ -327,7 +328,6 @@ chrome.runtime.onInstalled.addListener(() => {
           "SKIPPY",
           "JIF",
           "SCHWEPPES",
-          // "A&W" removed due to short length => "AW"
           "BARQ'S",
           "ROOT BEER",
           "CRYSTAL LIGHT",
@@ -362,7 +362,7 @@ chrome.runtime.onInstalled.addListener(() => {
           "KNORR",
           "MICHELINA'S",
           "TEMPTATIONS",
-          "PEPPERIDGE",
+          "PEPPERIDGE FARM",
           "NESTLE",
           "ENJOY LIFE",
           "GT'S",
@@ -447,7 +447,9 @@ chrome.runtime.onInstalled.addListener(() => {
           "ARM & HAMMER",
           "ALMOND BREEZE",
           "44TH STREET",
-          "GREAT VALUE",
+          // "GREAT VALUE" => moved to partial cat4
+          "GREAT VALUE" // We'll actually remove this from final cat3 to avoid confusion
+          ,
           "MANNS",
           "SWANSON'S",
           "PLANTERS",
@@ -477,11 +479,14 @@ chrome.runtime.onInstalled.addListener(() => {
           "GENERAL MILLS",
           "KIRKLAND"
         ];
+        // remove "GREAT VALUE" from cat3
+        cat3 = cat3.filter(b => !/^\s*GREAT VALUE\s*$/i.test(b));
         cat3 = cleanBrandList(cat3);
         chrome.storage.sync.set({ cat3US: cat3 });
       }
 
       // 4) Partial US/CA (❓)
+      // Add "Great Value", "Western Family", "Guerrero (CA)", "Kraft Canada", "Nestlé (CAN)" if you want them recognized as partial
       if (!data.cat4PartialUSCA) {
         let cat4 = [
           "KRAFT DINNER (KD)",
@@ -523,7 +528,14 @@ chrome.runtime.onInstalled.addListener(() => {
           "UNILEVER (US/EU, BUT PRODUCTION PLANT IN CANADA)",
           "NESTLÉ (GLOBAL, SOME PRODUCTS MADE IN CANADA)",
           "HAAGEN-DAZS (GLOBAL, US PARTNERSHIP, SOME PRODUCTION IN CA)",
-          "BREYERS (US, ALSO MADE IN CANADA)"
+          "BREYERS (US, ALSO MADE IN CANADA)",
+
+          // Newly added partial items:
+          "GREAT VALUE (US BRAND, SOME PRODUCTS FROM CANADA)",
+          "WESTERN FAMILY (PRIMARY CA BRAND, POSSIBLE US SOURCING)",
+          "GUERRERO (CA) (MEX BRAND, SOLD IN CA, PARTIAL?)",
+          "KRAFT CANADA (US COMPANY, CA DIV)",
+          "NESTLÉ (CAN) (GLOBAL, CA FACTORIES)"
         ];
         cat4 = cleanBrandList(cat4);
         chrome.storage.sync.set({ cat4PartialUSCA: cat4 });
@@ -562,7 +574,7 @@ chrome.runtime.onInstalled.addListener(() => {
         chrome.storage.sync.set({ cat5PartialUSMX: cat5 });
       }
 
-      // 6) Outside any (🌐)
+      // 6) Outside (🌐)
       if (!data.cat6Outside) {
         let cat6 = [
           "FERRERO (ITALY)",
@@ -594,7 +606,8 @@ chrome.runtime.onInstalled.addListener(() => {
           "MARUTAI (JAPAN)",
           "PLAZA BISCUITS (SERBIA)",
           "AHMAD TEA (UK)",
-          "MELLIN (ITALY)"
+          "MELLIN (ITALY)",
+          "LAPHROAIG (SCOTLAND)"
         ];
         cat6 = cleanBrandList(cat6);
         chrome.storage.sync.set({ cat6Outside: cat6 });
