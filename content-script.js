@@ -1,3 +1,7 @@
+/****************************************************
+ * content-script.js
+ ****************************************************/
+
 let CAT1 = []; // 🍁
 let CAT2 = []; // 🇲🇽
 let CAT3 = []; // ❌
@@ -5,34 +9,29 @@ let CAT4 = []; // ❓
 let CAT5 = []; // ❔
 let CAT6 = []; // 🌐
 
-/**
- * Normalize a string by converting to uppercase, removing parenthetical content,
- * stripping trademark symbols, and then removing any non-alphanumeric characters.
- */
+let advancedMode = false; // toggled by "advancedBrandDebug"
+
 function superNormalize(str) {
   let out = str.toUpperCase();
-  // Remove any parenthetical content (e.g., " (ITALY)" becomes "")
+  // remove parentheses
   out = out.replace(/\(.*?\)/g, "");
+  // remove trademark symbols
   out = out.replace(/[®™©]/g, "");
+  // replace curly quotes
   out = out.replace(/[’‘]/g, "'").replace(/[“”]/g, '"');
+  // keep only letters/digits
   out = out.replace(/[^A-Z0-9]/g, "");
   return out;
 }
 
 /**
- * Given a text string (such as a product title), check all brand lists and
- * return the emoji corresponding to the best match.
- *
- * For each category, we loop over its brands. If the normalized text contains
- * the normalized brand, we record that match along with the length of the
- * normalized brand string. In the end, we choose the match with the longest
- * normalized brand (and if there’s a tie, the one from the higher-priority
- * category).
+ * Return { brand, emoji } or null
+ * skipping brand if normalized length <4
  */
-function determineEmoji(text) {
-  const normalizedText = superNormalize(text);
-  // Define our categories along with their indicator emoji and a priority.
-  // Lower priority numbers mean “more important.”
+function findBestBrandAndEmoji(originalText) {
+  const normalizedText = superNormalize(originalText);
+  let best = { brand: "", length: 0, priority: Infinity, emoji: "" };
+
   const categories = [
     { arr: CAT1, emoji: "🍁", priority: 1 },
     { arr: CAT2, emoji: "🇲🇽", priority: 2 },
@@ -42,30 +41,35 @@ function determineEmoji(text) {
     { arr: CAT6, emoji: "🌐", priority: 6 }
   ];
 
-  let bestMatch = { emoji: "", length: 0, priority: Infinity };
-
-  // Loop over every category and every brand in that category.
   for (const cat of categories) {
     for (const brand of cat.arr) {
-      const normBrand = superNormalize(brand);
-      if (normBrand && normalizedText.includes(normBrand)) {
-        // If this brand's normalized length is longer than what we already have,
-        // or if equal but the category has higher priority, record it.
+      const nb = superNormalize(brand);
+      // skip brand if length <4
+      if (nb.length < 4) continue;
+
+      if (nb && normalizedText.includes(nb)) {
         if (
-          normBrand.length > bestMatch.length ||
-          (normBrand.length === bestMatch.length && cat.priority < bestMatch.priority)
+          nb.length > best.length ||
+          (nb.length === best.length && cat.priority < best.priority)
         ) {
-          bestMatch = { emoji: cat.emoji, length: normBrand.length, priority: cat.priority };
+          best = {
+            brand,
+            length: nb.length,
+            priority: cat.priority,
+            emoji: cat.emoji
+          };
         }
       }
     }
   }
-  return bestMatch.emoji;
+
+  if (best.emoji) {
+    return { brand: best.brand, emoji: best.emoji };
+  }
+  return null;
 }
 
-/**
- * Recursively gather all text from an element.
- */
+/** Recursively gather text from an element. */
 function gatherAllText(elem) {
   if (!elem) return "";
   let txt = "";
@@ -80,24 +84,29 @@ function gatherAllText(elem) {
 }
 
 /**
- * Tag an element by appending the appropriate origin emoji to its inner text.
- * (Skip tagging if an indicator is already present.)
+ * If we haven't appended an emoji yet, check for brand & append
  */
 function tagElement(el) {
   if (!el) return;
   const text = gatherAllText(el);
   if (!text) return;
-  // If any indicator emoji is already present, skip tagging.
+
+  // skip if there's already an emoji
   if (/[❌🍁🇲🇽❓❔🌐]/.test(text)) return;
 
-  const emoji = determineEmoji(text);
-  if (emoji) {
-    el.innerText += " " + emoji;
+  const result = findBestBrandAndEmoji(text);
+  if (result) {
+    if (advancedMode) {
+      // e.g. " 🍁 [Lay's]"
+      el.innerText += ` ${result.emoji} [${result.brand}]`;
+    } else {
+      el.innerText += " " + result.emoji;
+    }
   }
 }
 
 /**
- * Scan for elements that are likely to be product titles, then tag each.
+ * Query likely product-title selectors
  */
 function scanBySelectors() {
   const selectors = [
@@ -120,8 +129,7 @@ function scanBySelectors() {
 }
 
 /**
- * Walk through all text nodes in the document and tag them if they’re not
- * already tagged.
+ * Walk text nodes, append the same logic if brand found
  */
 function walkTextNodes() {
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -130,18 +138,20 @@ function walkTextNodes() {
     if (!node) break;
     const txt = node.nodeValue;
     if (!txt || !txt.trim()) continue;
-    // Skip if the node already contains an indicator emoji.
     if (/[❌🍁🇲🇽❓❔🌐]/.test(txt)) continue;
-    const emoji = determineEmoji(txt);
-    if (emoji) {
-      node.nodeValue = txt + " " + emoji;
+
+    const result = findBestBrandAndEmoji(txt);
+    if (result) {
+      if (advancedMode) {
+        node.nodeValue = txt + ` ${result.emoji} [${result.brand}]`;
+      } else {
+        node.nodeValue = txt + " " + result.emoji;
+      }
     }
   }
 }
 
-/**
- * Observe DOM mutations and re-run our scans.
- */
+/** Observe DOM changes to keep re-tagging. */
 function observeMutations() {
   const observer = new MutationObserver(() => {
     scanBySelectors();
@@ -150,32 +160,29 @@ function observeMutations() {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
-/**
- * Main function: load our brand lists from storage and initiate scans.
- */
+/** main */
 function main() {
-  chrome.storage.sync.get(
-    [
-      "cat1Canadian",
-      "cat2Mexican",
-      "cat3US",
-      "cat4PartialUSCA",
-      "cat5PartialUSMX",
-      "cat6Outside"
-    ],
-    (data) => {
-      CAT1 = data.cat1Canadian || [];
-      CAT2 = data.cat2Mexican || [];
-      CAT3 = data.cat3US || [];
-      CAT4 = data.cat4PartialUSCA || [];
-      CAT5 = data.cat5PartialUSMX || [];
-      CAT6 = data.cat6Outside || [];
+  // load brand arrays + advancedBrandDebug from storage
+  chrome.storage.sync.get([
+    "cat1Canadian", "cat2Mexican", "cat3US",
+    "cat4PartialUSCA", "cat5PartialUSMX", "cat6Outside",
+    "advancedBrandDebug"
+  ], (data) => {
+    CAT1 = data.cat1Canadian || [];
+    CAT2 = data.cat2Mexican || [];
+    CAT3 = data.cat3US || [];
+    CAT4 = data.cat4PartialUSCA || [];
+    CAT5 = data.cat5PartialUSMX || [];
+    CAT6 = data.cat6Outside || [];
 
-      scanBySelectors();
-      walkTextNodes();
-      observeMutations();
-    }
-  );
+    // read advancedBrandDebug => toggles advancedMode
+    advancedMode = !!data.advancedBrandDebug;
+
+    // do initial
+    scanBySelectors();
+    walkTextNodes();
+    observeMutations();
+  });
 }
 
 main();
