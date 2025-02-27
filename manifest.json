@@ -1,6 +1,6 @@
 {
   "name": "Canada-Mexico-US origin indicator",
-  "version": "1.41",
+  "version": "1.55",
   "manifest_version": 3,
   "description": "Tags items with 🍁, 🇲🇽, ❌, etc. across many e-commerce sites. Handles accent normalization & short brand skipping.",
   "permissions": [
