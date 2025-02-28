@@ -8,25 +8,40 @@ let CAT3 = []; // ❌
 let CAT4 = []; // ❓
 let CAT5 = []; // ❔
 let CAT6 = []; // 🌐
+let CAT7 = []; // MAGA Donor (🤡), new
 
-let advancedMode = false; // toggled by "advancedBrandDebug"
-
+/**
+ * superNormalize: uppercase, remove parentheses, trademark symbols,
+ * curly quotes, punctuation, etc.
+ */
 function superNormalize(str) {
   let out = str.toUpperCase();
-  // remove parentheses
   out = out.replace(/\(.*?\)/g, "");
-  // remove trademark symbols
   out = out.replace(/[®™©]/g, "");
-  // replace curly quotes
   out = out.replace(/[’‘]/g, "'").replace(/[“”]/g, '"');
-  // keep only letters/digits
   out = out.replace(/[^A-Z0-9]/g, "");
   return out;
 }
 
+/** 
+ * foundMagaDonor checks if text includes any brand from cat7 (≥4 chars).
+ */
+function foundMagaDonor(text) {
+  const normText = superNormalize(text);
+  for (const brand of CAT7) {
+    const nb = superNormalize(brand);
+    if (nb.length < 4) continue;
+    if (nb && normText.includes(nb)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
- * Return { brand, emoji } or null
- * skipping brand if normalized length <4
+ * findBestBrandAndEmoji
+ *  Return { brand, emoji } from the best match in cat1..cat6, ignoring
+ *  brand length <4. Ties break by smaller "priority".
  */
 function findBestBrandAndEmoji(originalText) {
   const normalizedText = superNormalize(originalText);
@@ -44,10 +59,9 @@ function findBestBrandAndEmoji(originalText) {
   for (const cat of categories) {
     for (const brand of cat.arr) {
       const nb = superNormalize(brand);
-      // skip brand if length <4
       if (nb.length < 4) continue;
-
       if (nb && normalizedText.includes(nb)) {
+        // If brand is longer or tie but lower priority => store
         if (
           nb.length > best.length ||
           (nb.length === best.length && cat.priority < best.priority)
@@ -65,15 +79,18 @@ function findBestBrandAndEmoji(originalText) {
 
   if (best.emoji) {
     return { brand: best.brand, emoji: best.emoji };
+  } else {
+    return null;
   }
-  return null;
 }
 
-/** Recursively gather text from an element. */
+/** 
+ * gatherAllText from an element 
+ */
 function gatherAllText(elem) {
   if (!elem) return "";
   let txt = "";
-  elem.childNodes.forEach((child) => {
+  elem.childNodes.forEach(child => {
     if (child.nodeType === Node.TEXT_NODE) {
       txt += child.nodeValue;
     } else if (child.nodeType === Node.ELEMENT_NODE) {
@@ -84,29 +101,39 @@ function gatherAllText(elem) {
 }
 
 /**
- * If we haven't appended an emoji yet, check for brand & append
+ * tagElement logic:
+ * - skip if text already includes any known indicator
+ * - if MAGA brand => prepend "🤡 MAGA Donor 🤬"
+ * - then find best brand => append that emoji
  */
 function tagElement(el) {
   if (!el) return;
-  const text = gatherAllText(el);
-  if (!text) return;
+  const originalText = gatherAllText(el);
+  if (!originalText) return;
 
-  // skip if there's already an emoji
-  if (/[❌🍁🇲🇽❓❔🌐]/.test(text)) return;
-
-  const result = findBestBrandAndEmoji(text);
-  if (result) {
-    if (advancedMode) {
-      // e.g. " 🍁 [Lay's]"
-      el.innerText += ` ${result.emoji} [${result.brand}]`;
-    } else {
-      el.innerText += " " + result.emoji;
-    }
+  // If already has an indicator, skip
+  if (/(❌|🍁|🇲🇽|❓|❔|🌐|MAGA Donor)/.test(originalText)) {
+    return;
   }
+
+  let newText = originalText;
+
+  // A) if in MAGA cat7 => prepend
+  if (foundMagaDonor(originalText)) {
+    newText = "🤡 MAGA Donor 🤬" + newText;
+  }
+
+  // B) see if cat1..cat6 matched => append
+  const catResult = findBestBrandAndEmoji(originalText);
+  if (catResult) {
+    newText += " " + catResult.emoji;
+  }
+
+  el.innerText = newText;
 }
 
 /**
- * Query likely product-title selectors
+ * scanBySelectors: attempt known product-title selectors
  */
 function scanBySelectors() {
   const selectors = [
@@ -129,44 +156,54 @@ function scanBySelectors() {
 }
 
 /**
- * Walk text nodes, append the same logic if brand found
+ * walkTextNodes: do the same logic for raw text nodes
  */
 function walkTextNodes() {
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   while (true) {
     const node = walker.nextNode();
     if (!node) break;
-    const txt = node.nodeValue;
+    let txt = node.nodeValue;
     if (!txt || !txt.trim()) continue;
-    if (/[❌🍁🇲🇽❓❔🌐]/.test(txt)) continue;
+    // skip if it has an indicator
+    if (/(❌|🍁|🇲🇽|❓|❔|🌐|MAGA Donor)/.test(txt)) continue;
 
-    const result = findBestBrandAndEmoji(txt);
-    if (result) {
-      if (advancedMode) {
-        node.nodeValue = txt + ` ${result.emoji} [${result.brand}]`;
-      } else {
-        node.nodeValue = txt + " " + result.emoji;
-      }
+    if (foundMagaDonor(txt)) {
+      txt = "🤡 MAGA Donor 🤬" + txt;
     }
+
+    const catResult = findBestBrandAndEmoji(txt);
+    if (catResult) {
+      txt += " " + catResult.emoji;
+    }
+
+    node.nodeValue = txt;
   }
 }
 
-/** Observe DOM changes to keep re-tagging. */
+/**
+ * observeMutations
+ */
 function observeMutations() {
-  const observer = new MutationObserver(() => {
+  const obs = new MutationObserver(() => {
     scanBySelectors();
     walkTextNodes();
   });
-  observer.observe(document.body, { childList: true, subtree: true });
+  obs.observe(document.body, { childList: true, subtree: true });
 }
 
-/** main */
+/**
+ * main
+ */
 function main() {
-  // load brand arrays + advancedBrandDebug from storage
   chrome.storage.sync.get([
-    "cat1Canadian", "cat2Mexican", "cat3US",
-    "cat4PartialUSCA", "cat5PartialUSMX", "cat6Outside",
-    "advancedBrandDebug"
+    "cat1Canadian", 
+    "cat2Mexican", 
+    "cat3US",
+    "cat4PartialUSCA",
+    "cat5PartialUSMX",
+    "cat6Outside",
+    "cat7MagaDonor"
   ], (data) => {
     CAT1 = data.cat1Canadian || [];
     CAT2 = data.cat2Mexican || [];
@@ -174,11 +211,8 @@ function main() {
     CAT4 = data.cat4PartialUSCA || [];
     CAT5 = data.cat5PartialUSMX || [];
     CAT6 = data.cat6Outside || [];
+    CAT7 = data.cat7MagaDonor || [];
 
-    // read advancedBrandDebug => toggles advancedMode
-    advancedMode = !!data.advancedBrandDebug;
-
-    // do initial
     scanBySelectors();
     walkTextNodes();
     observeMutations();
