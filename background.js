@@ -293,6 +293,7 @@ chrome.runtime.onInstalled.addListener(() => {
     if (!data.cat3US) {
       let cat3 = [
         "HOSTESS",
+        "MENCHIES",
         "MUNCHIES",
         "COCA-COLA",
         "PEPSI",
@@ -680,13 +681,27 @@ chrome.runtime.onInstalled.addListener(() => {
         "KOCH",
         "purina",
         "CHIQUITA",
+        "HILLSHIRE",
         "FOLGERS",
         "LAND O' LAKES",
         "PURDUE",
         "SMUCKER'S",
         "BACARDI",
         "COORS",
-        "GREY GOOSE"
+        "GREY GOOSE",
+        "MENCHIES",
+        "CARVEL",
+        "jAMBA",
+        "CINNABON",
+        "AUNTIE ANNES",
+        "MCALISTERS",
+        "SCHLOTZSKY'S",
+        "arbys",
+        "buffalo wild wings",
+        "SONIC DRIVE-IN",
+        "JIMMY JOHN'S",
+        "DUNKIN",
+        "BASKIN-ROBBINS"
       ];
       cat7 = cleanBrandList(cat7);
       chrome.storage.sync.set({ cat7MagaDonor: cat7 });
